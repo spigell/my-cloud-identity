@@ -1,0 +1,5 @@
+name: my-cloud-identity
+description: My projects, accounts and keys for GCP, Cloudflare, etc...
+backend:
+  url: gs://spigell-infra-pulumi-states
+runtime: nodejs

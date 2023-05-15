@@ -1,0 +1,9 @@
+encryptionsalt: v1:Gjtsvcn0+6o=:v1:mAePdzU1wYbsAfiV:lZbgR50VWbJEFRwmQTYv/+XJeEC+gA==
+config:
+  cloudflare:email:
+    secure: v1:fGspT5cI/oB5Jin0:t2GWNrmcSjKd6aDIOMMqq96rBf3AcRAaU9AD3ggwPROn6Q==
+  my-cloud-identity:cloudflare:
+    zones:
+      - id:
+          secure: v1:+8TATtCCk9JN1RhV:p4Od3suWT6vathU2ySJ814gcbCvurAF/ivD5lqLABLw7Ra5mrfkQ8k5La729KGTQ
+        name: sergeichukh.cloud
