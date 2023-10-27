@@ -11,7 +11,7 @@ const billingAccountId = billingAccount.then((a) => a.id);
 
 export const infraProject = new infra.Project(
   billingAccountId
-).WithGKEServiceAccounts(["spigell-resume-dev", "spigell-resume-production", "hetzner-pulumi-runner"]);
+).WithGKEServiceAccounts(["spigell-resume-dev", "spigell-resume-production"]);
 
 export const resumeProduction = resume.ResumeProject(
   billingAccountId,

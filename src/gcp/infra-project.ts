@@ -20,6 +20,11 @@ const basicServiceAccounts: BasicSA[] = [
     roles: ["cloudkms.cryptoKeyDecrypter"],
   },
   {
+    // Used in github repo to deploy hcloud infra
+    name: "phkh-runner",
+    roles: ["cloudkms.cryptoKeyDecrypter"],
+  },
+  {
     // It deploys all resources in the project
     name: "pulumi-deployer",
     roles: ["container.clusterAdmin"],
@@ -71,10 +76,31 @@ export class Project {
       },
     });
 
+    new gcp.kms.CryptoKey(`${name}-phkh-pulumi-key`, {
+      keyRing: keyRing.id,
+      rotationPeriod: `${15 * 24 * 60 * 60}s`,
+      name: `${name}-phkh-pulumi-key`,
+      versionTemplate: {
+        protectionLevel: "SOFTWARE",
+        algorithm: "GOOGLE_SYMMETRIC_ENCRYPTION",
+      },
+    });
+
     this.kmsKeyPath = cryptoKey.id;
 
     const statesBucket = new gcp.storage.Bucket(`${name}-pulumi-state`, {
       name: `${name}-pulumi-states`,
+      project: project.name,
+      location: "us-central1",
+      storageClass: "REGIONAL",
+      publicAccessPrevention: "enforced",
+      versioning: {
+        enabled: true,
+      },
+    });
+
+    const PHKHStateBucket = new gcp.storage.Bucket(`${name}-phkh-pulumi-state`, {
+      name: `${name}-phkh-pulumi-states`,
       project: project.name,
       location: "us-central1",
       storageClass: "REGIONAL",
@@ -128,6 +154,17 @@ export class Project {
               member: `serviceAccount:${email}`,
               role: `roles/storage.objectAdmin`,
               bucket: statesBucket.name,
+            },
+            { deleteBeforeReplace: true }
+          );
+        }
+        if (email.includes("phkh-runner")) {
+          new gcp.storage.BucketIAMMember(
+            `${name}-phkh-pulumi-runner-state-access`,
+            {
+              member: `serviceAccount:${email}`,
+              role: `roles/storage.objectAdmin`,
+              bucket: PHKHStateBucket.name,
             },
             { deleteBeforeReplace: true }
           );
