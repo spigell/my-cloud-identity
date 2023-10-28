@@ -17,12 +17,12 @@ const basicServiceAccounts: BasicSA[] = [
   {
     // It only sets up the project and manage the state
     name: "pulumi-runner",
-    roles: ["cloudkms.cryptoKeyDecrypter"],
+    roles: [],
   },
   {
     // Used in github repo to deploy hcloud infra
     name: "phkh-runner",
-    roles: ["cloudkms.cryptoKeyDecrypter"],
+    roles: [],
   },
   {
     // It deploys all resources in the project
@@ -76,7 +76,7 @@ export class Project {
       },
     });
 
-    new gcp.kms.CryptoKey(`${name}-phkh-pulumi-key`, {
+    const PHKHCryptoKey = new gcp.kms.CryptoKey(`${name}-phkh-pulumi-key`, {
       keyRing: keyRing.id,
       rotationPeriod: `${15 * 24 * 60 * 60}s`,
       name: `${name}-phkh-pulumi-key`,
@@ -132,6 +132,7 @@ export class Project {
           },
           { dependsOn: enabledApis }
         );
+
       });
 
       const m: createdServiceAccount = {
@@ -143,6 +144,7 @@ export class Project {
 
       this.pulumiServiceAccounts.push(m);
     });
+
 
     this.pulumiServiceAccounts.forEach((ac) => {
       // Apply to only pulumi-runner.
@@ -168,6 +170,21 @@ export class Project {
             },
             { deleteBeforeReplace: true }
           );
+
+          new gcp.kms.CryptoKeyIAMBinding(`${name}-phkh-pulumi-runner-kms-encryptor`, {
+            cryptoKeyId: PHKHCryptoKey.id,
+            role: `roles/cloudkms.cryptoKeyEncrypter`,
+            members: [
+              pulumi.interpolate`serviceAccount:${email}`,
+            ],
+          });
+          new gcp.kms.CryptoKeyIAMBinding(`${name}-phkh-pulumi-runner-kms-decryptor`, {
+            cryptoKeyId: PHKHCryptoKey.id,
+            role: `roles/cloudkms.cryptoKeyDecrypter`,
+            members: [
+              pulumi.interpolate`serviceAccount:${email}`,
+            ],
+          });
         }
       });
     });
