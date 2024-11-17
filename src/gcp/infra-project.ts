@@ -25,6 +25,11 @@ const basicServiceAccounts: BasicSA[] = [
     roles: [],
   },
   {
+    // Used in github repo to deploy talos clusters
+    name: "talos-runner",
+    roles: [],
+  },
+  {
     // It deploys all resources in the project
     name: "pulumi-deployer",
     roles: ["container.clusterAdmin"],
@@ -106,7 +111,18 @@ export class Project {
       storageClass: "REGIONAL",
       publicAccessPrevention: "enforced",
       versioning: {
-        enabled: true,
+        enabled: false,
+      },
+    });
+
+    const PulumiTalosStateBucket = new gcp.storage.Bucket(`${name}-talos-pulumi-state`, {
+      name: `${name}-talos-pulumi-states`,
+      project: project.name,
+      location: "us-central1",
+      storageClass: "REGIONAL",
+      publicAccessPrevention: "enforced",
+      versioning: {
+        enabled: false,
       },
     });
 
@@ -186,6 +202,16 @@ export class Project {
             ],
           });
         }
+        if (email.includes("pulumi-talos-cluster-runner")) {
+          new gcp.storage.BucketIAMMember(
+            `${name}-pulumi-talos-runner-state-access`,
+            {
+              member: `serviceAccount:${email}`,
+              role: `roles/storage.objectAdmin`,
+              bucket: PulumiTalosStateBucket.name,
+            },
+            { deleteBeforeReplace: true }
+          )};
       });
     });
   }
