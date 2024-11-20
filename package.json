@@ -2,15 +2,15 @@
   "name": "my-gcp",
   "main": "index.ts",
   "devDependencies": {
-    "@types/node": "19.8.1",
+    "@types/node": "22.9.1",
     "lint-staged": "13.2.0",
     "mrm": "2",
     "prettier": "2.8.7"
   },
   "dependencies": {
     "@pulumi/cloudflare": "4.12.1",
-    "@pulumi/gcp": "6.55.1",
-    "@pulumi/pulumi": "3.67.0"
+    "@pulumi/gcp": "^8.9.3",
+    "@pulumi/pulumi": "^3.140.0"
   },
   "scripts": {
     "prepare": "husky install"

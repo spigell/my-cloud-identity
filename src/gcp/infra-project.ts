@@ -83,7 +83,7 @@ export class Project {
 
     const PHKHCryptoKey = new gcp.kms.CryptoKey(`${name}-phkh-pulumi-key`, {
       keyRing: keyRing.id,
-      rotationPeriod: `${15 * 24 * 60 * 60}s`,
+      rotationPeriod: `${365 * 24 * 60 * 60}s`,
       name: `${name}-phkh-pulumi-key`,
       versionTemplate: {
         protectionLevel: "SOFTWARE",
@@ -99,32 +99,47 @@ export class Project {
       location: "us-central1",
       storageClass: "REGIONAL",
       publicAccessPrevention: "enforced",
+      softDeletePolicy: {
+        retentionDurationSeconds: 0,
+      },
       versioning: {
         enabled: true,
       },
     });
 
-    const PHKHStateBucket = new gcp.storage.Bucket(`${name}-phkh-pulumi-state`, {
-      name: `${name}-phkh-pulumi-states`,
-      project: project.name,
-      location: "us-central1",
-      storageClass: "REGIONAL",
-      publicAccessPrevention: "enforced",
-      versioning: {
-        enabled: false,
-      },
-    });
+    const PHKHStateBucket = new gcp.storage.Bucket(
+      `${name}-phkh-pulumi-state`,
+      {
+        name: `${name}-phkh-pulumi-states`,
+        project: project.name,
+        location: "us-central1",
+        storageClass: "REGIONAL",
+        publicAccessPrevention: "enforced",
+        softDeletePolicy: {
+          retentionDurationSeconds: 0,
+        },
+        versioning: {
+          enabled: false,
+        },
+      }
+    );
 
-    const PulumiTalosStateBucket = new gcp.storage.Bucket(`${name}-talos-pulumi-state`, {
-      name: `${name}-talos-pulumi-states`,
-      project: project.name,
-      location: "us-central1",
-      storageClass: "REGIONAL",
-      publicAccessPrevention: "enforced",
-      versioning: {
-        enabled: false,
-      },
-    });
+    const PulumiTalosStateBucket = new gcp.storage.Bucket(
+      `${name}-talos-pulumi-state`,
+      {
+        name: `${name}-talos-pulumi-states`,
+        project: project.name,
+        location: "us-central1",
+        storageClass: "REGIONAL",
+        publicAccessPrevention: "enforced",
+        softDeletePolicy: {
+          retentionDurationSeconds: 0,
+        },
+        versioning: {
+          enabled: false,
+        },
+      }
+    );
 
     // Create a SA for my-infra project
     basicServiceAccounts.forEach((ac) => {
@@ -148,7 +163,6 @@ export class Project {
           },
           { dependsOn: enabledApis }
         );
-
       });
 
       const m: createdServiceAccount = {
@@ -160,7 +174,6 @@ export class Project {
 
       this.pulumiServiceAccounts.push(m);
     });
-
 
     this.pulumiServiceAccounts.forEach((ac) => {
       // Apply to only pulumi-runner.
@@ -187,22 +200,24 @@ export class Project {
             { deleteBeforeReplace: true }
           );
 
-          new gcp.kms.CryptoKeyIAMBinding(`${name}-phkh-pulumi-runner-kms-encryptor`, {
-            cryptoKeyId: PHKHCryptoKey.id,
-            role: `roles/cloudkms.cryptoKeyEncrypter`,
-            members: [
-              pulumi.interpolate`serviceAccount:${email}`,
-            ],
-          });
-          new gcp.kms.CryptoKeyIAMBinding(`${name}-phkh-pulumi-runner-kms-decryptor`, {
-            cryptoKeyId: PHKHCryptoKey.id,
-            role: `roles/cloudkms.cryptoKeyDecrypter`,
-            members: [
-              pulumi.interpolate`serviceAccount:${email}`,
-            ],
-          });
+          new gcp.kms.CryptoKeyIAMBinding(
+            `${name}-phkh-pulumi-runner-kms-encryptor`,
+            {
+              cryptoKeyId: PHKHCryptoKey.id,
+              role: `roles/cloudkms.cryptoKeyEncrypter`,
+              members: [pulumi.interpolate`serviceAccount:${email}`],
+            }
+          );
+          new gcp.kms.CryptoKeyIAMBinding(
+            `${name}-phkh-pulumi-runner-kms-decryptor`,
+            {
+              cryptoKeyId: PHKHCryptoKey.id,
+              role: `roles/cloudkms.cryptoKeyDecrypter`,
+              members: [pulumi.interpolate`serviceAccount:${email}`],
+            }
+          );
         }
-        if (email.includes("pulumi-talos-cluster-runner")) {
+        if (email.includes("spigell-infra-talos-runner")) {
           new gcp.storage.BucketIAMMember(
             `${name}-pulumi-talos-runner-state-access`,
             {
@@ -211,7 +226,8 @@ export class Project {
               bucket: PulumiTalosStateBucket.name,
             },
             { deleteBeforeReplace: true }
-          )};
+          );
+        }
       });
     });
   }

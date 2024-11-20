@@ -5,7 +5,7 @@ import * as infra from "./infra-project";
 
 // Default name for my billing account
 const billingAccount = gcp.organizations.getBillingAccount({
-  displayName: "My Billing Account",
+  displayName: "Main",
 });
 const billingAccountId = billingAccount.then((a) => a.id);
 
@@ -18,10 +18,10 @@ export const resumeProduction = resume.ResumeProject(
   "spigell-resume-production"
 );
 
-export const resumeDev = resume.ResumeProject(
-  billingAccountId,
-  "spigell-resume-dev"
-);
+//export const resumeDev = resume.ResumeProject(
+//  billingAccountId,
+//  "spigell-resume-dev"
+//);
 
 // Add permissions pulling images from all resumes project registries
 // It doesn't work. Need to debug!
@@ -30,5 +30,5 @@ export const resumeDev = resume.ResumeProject(
 
 state.DeployStateProject(billingAccountId, [
   resumeProduction.runnerEmail,
-  resumeDev.runnerEmail,
+  //resumeDev.runnerEmail,
 ]);
