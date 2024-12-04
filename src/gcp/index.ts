@@ -2,6 +2,7 @@ import * as gcp from "@pulumi/gcp";
 import * as resume from "./resume-project";
 import * as state from "./state-project";
 import * as infra from "./infra-project";
+import * as pulumi from "@pulumi/pulumi";
 
 // Default name for my billing account
 const billingAccount = gcp.organizations.getBillingAccount({
@@ -18,17 +19,25 @@ export const resumeProduction = resume.ResumeProject(
   "spigell-resume-production"
 );
 
-//export const resumeDev = resume.ResumeProject(
-//  billingAccountId,
-//  "spigell-resume-dev"
-//);
+export const resumeDev = resume.ResumeProject(
+  billingAccountId,
+  "spigell-resume-dev"
+);
 
 // Add permissions pulling images from all resumes project registries
 // It doesn't work. Need to debug!
 // resume.AddRegistryPermissions(resumeProduction.projectID, 'spigel-resume-dev');
 // resume.AddRegistryPermissions(resumeDev.projectID, 'spigel-resume-production');
 
+pulumi
+  .all([resumeProduction.runnerEmail, resumeDev.runnerEmail])
+  .apply((args: string[]) => {
+    args.forEach((v: string) => {
+      infraProject.allowWriteToStateBucket(v);
+    });
+  });
+
 state.DeployStateProject(billingAccountId, [
   resumeProduction.runnerEmail,
-  //resumeDev.runnerEmail,
+  resumeDev.runnerEmail,
 ]);

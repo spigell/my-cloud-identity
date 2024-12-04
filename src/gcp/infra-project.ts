@@ -42,6 +42,7 @@ export class Project {
   kmsKeyPath: pulumi.Output<string>;
   pulumiServiceAccounts: createdServiceAccount[] = [];
   GkeServiceAccounts: createdServiceAccount[] = [];
+  statesBucketName: pulumi.Output<string>;
   constructor(billingAccount: Promise<string>) {
     this.name = name;
 
@@ -106,6 +107,7 @@ export class Project {
         enabled: true,
       },
     });
+    this.statesBucketName = statesBucket.name;
 
     const PHKHStateBucket = new gcp.storage.Bucket(
       `${name}-phkh-pulumi-state`,
@@ -265,5 +267,17 @@ export class Project {
     });
 
     return this;
+  }
+
+  allowWriteToStateBucket(email: string) {
+    new gcp.storage.BucketIAMMember(
+      `pulumi-state-member-${email.split(".")[0]}`,
+      {
+        member: `serviceAccount:${email}`,
+        role: `roles/storage.objectAdmin`,
+        bucket: this.statesBucketName,
+      },
+      { deleteBeforeReplace: true }
+    );
   }
 }

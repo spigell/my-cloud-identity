@@ -4,7 +4,7 @@ import * as pulumi from "@pulumi/pulumi";
 
 export const infraProject = gcp.infraProject;
 export const resumeProduction = gcp.resumeProduction;
-// export const resumeDev = gcp.resumeDev;
+export const resumeDev = gcp.resumeDev;
 
 const config = new pulumi.Config();
 const cfg = config.requireObject<cloudflare.CloudflareConfig>("cloudflare");
