@@ -1,6 +1,6 @@
-import * as cloudflare from "@pulumi/cloudflare";
-import * as pulumi from "@pulumi/pulumi";
-import { Zone } from "./index";
+import * as cloudflare from '@pulumi/cloudflare';
+import * as pulumi from '@pulumi/pulumi';
+import { Zone } from './index.js';
 
 const permissionGroups = cloudflare.getApiTokenPermissionGroups({});
 
@@ -11,25 +11,25 @@ type token = {
 
 const myTokens: token[] = [
   {
-    zoneName: "sergeichukh.cloud",
+    zoneName: 'sergeichukh.cloud',
     tokens: new Map([
       [
-        "sergeichukhCloudMainToken",
+        'sergeichukhCloudMainToken',
         [
-          permissionGroups.then((all) => all.permissions["DNS Read"]),
-          permissionGroups.then((all) => all.permissions["DNS Write"]),
-          permissionGroups.then((all) => all.permissions["Page Rules Read"]),
-          permissionGroups.then((all) => all.permissions["Page Rules Write"]),
+          permissionGroups.then((all) => all.permissions['DNS Read']),
+          permissionGroups.then((all) => all.permissions['DNS Write']),
+          permissionGroups.then((all) => all.permissions['Page Rules Read']),
+          permissionGroups.then((all) => all.permissions['Page Rules Write']),
         ],
       ],
     ]),
   },
   {
-    zoneName: "sergeichukh.cloud",
+    zoneName: 'sergeichukh.cloud',
     tokens: new Map([
       [
-        "sergeiChukhCloudPurgeCacheToken",
-        [permissionGroups.then((all) => all.permissions["Cache Purge"])],
+        'sergeiChukhCloudPurgeCacheToken',
+        [permissionGroups.then((all) => all.permissions['Cache Purge'])],
       ],
     ]),
   },
@@ -55,9 +55,9 @@ export class Tokens {
               name: name,
               policies: [
                 {
-                  effect: "allow",
+                  effect: 'allow',
                   resources: {
-                    [`com.cloudflare.api.account.zone.${zone.id}`]: "*",
+                    [`com.cloudflare.api.account.zone.${zone.id}`]: '*',
                   },
                   permissionGroups: value,
                 },

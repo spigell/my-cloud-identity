@@ -1,4 +1,4 @@
-import * as tokens from "./tokens";
+import * as tokens from './tokens.js';
 
 export type CloudflareConfig = {
   zones: Zone[];

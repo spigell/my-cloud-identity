@@ -1,31 +1,31 @@
-import * as gcp from "@pulumi/gcp";
-import * as resume from "./resume-project";
-import * as gemini from "./gemini-project";
-import * as infra from "./infra-project";
-import * as pulumi from "@pulumi/pulumi";
+import * as gcp from '@pulumi/gcp';
+import * as resume from './resume-project.js';
+import * as gemini from './gemini-project.js';
+import * as infra from './infra-project.js';
+import * as pulumi from '@pulumi/pulumi';
 
 // Default name for my billing account
 const billingAccount = gcp.organizations.getBillingAccount({
-  displayName: "Main",
+  displayName: 'Main',
 });
 const billingAccountId = billingAccount.then((a) => a.id);
 
 export const HHResponderGeminiProject = new gemini.FreeTierProject(
-  "hh-responder-gemini"
+  'hh-responder-gemini',
 );
 
 export const infraProject = new infra.Project(
-  billingAccountId
-).WithGKEServiceAccounts(["spigell-resume-dev", "spigell-resume-production"]);
+  billingAccountId,
+).WithGKEServiceAccounts(['spigell-resume-dev', 'spigell-resume-production']);
 
 export const resumeProduction = resume.ResumeProject(
   billingAccountId,
-  "spigell-resume-production"
+  'spigell-resume-production',
 );
 
 export const resumeDev = resume.ResumeProject(
   billingAccountId,
-  "spigell-resume-dev"
+  'spigell-resume-dev',
 );
 
 // Add permissions pulling images from all resumes project registries
