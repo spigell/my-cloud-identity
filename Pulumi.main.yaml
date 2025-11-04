@@ -7,3 +7,6 @@ config:
       - id:
           secure: v1:+8TATtCCk9JN1RhV:p4Od3suWT6vathU2ySJ814gcbCvurAF/ivD5lqLABLw7Ra5mrfkQ8k5La729KGTQ
         name: sergeichukh.cloud
+  my-cloud-identity:kubeconfigs:
+    homelab:
+      secure: v1:83Ccns9T9K4zUatQ:BciNl0nzaJ4rLr7YGPBPDBAsXKA5Q/jv+PBwS0fccaRM7ncWIKsfKWZQALP5NJoMUWo72XPqU1cnxvpOkSrEK1JFLxnTpKaLUg==

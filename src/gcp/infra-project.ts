@@ -1,12 +1,14 @@
-import * as pulumi from "@pulumi/pulumi";
-import * as gcp from "@pulumi/gcp";
+import * as pulumi from '@pulumi/pulumi';
+import * as gcp from '@pulumi/gcp';
 
-interface createdServiceAccount {
-  [key: string]: pulumi.Output<string>;
+interface CreatedServiceAccount {
+  privateKey: pulumi.Output<string>;
+  email: pulumi.Output<string>;
+  namespace?: pulumi.Output<string>;
 }
 
-const name = "spigell-infra";
-const apis = ["container.googleapis.com", "cloudkms.googleapis.com"];
+const name = 'spigell-infra';
+const apis = ['container.googleapis.com', 'cloudkms.googleapis.com'];
 
 export type BasicSA = {
   name: string;
@@ -16,22 +18,22 @@ export type BasicSA = {
 const basicServiceAccounts: BasicSA[] = [
   {
     // It only sets up the project and manage the state
-    name: "pulumi-runner",
+    name: 'pulumi-runner',
     roles: [],
   },
   {
-    name: "reforge-ai",
+    name: 'reforge-ai',
     roles: [],
   },
   {
     // Used in github repo to deploy talos clusters
-    name: "talos-runner",
+    name: 'talos-runner',
     roles: [],
   },
   {
     // It deploys all resources in the project
-    name: "pulumi-deployer",
-    roles: ["container.clusterAdmin"],
+    name: 'pulumi-deployer',
+    roles: ['container.clusterAdmin'],
   },
 ];
 
@@ -39,8 +41,9 @@ const basicServiceAccounts: BasicSA[] = [
 export class Project {
   name: string;
   kmsKeyPath: pulumi.Output<string>;
-  pulumiServiceAccounts: createdServiceAccount[] = [];
-  GkeServiceAccounts: createdServiceAccount[] = [];
+  pulumiServiceAccounts: CreatedServiceAccount[] = [];
+  GkeServiceAccounts: CreatedServiceAccount[] = [];
+  public reforgeAiServiceAccountKey!: pulumi.Output<string>;
   statesBucketName: pulumi.Output<string>;
   constructor(billingAccount: Promise<string>) {
     this.name = name;
@@ -53,7 +56,7 @@ export class Project {
 
     const enabledApis: pulumi.Resource[] = [];
     apis.forEach((api) => {
-      let enabled = new gcp.projects.Service(`${name}-${api}`, {
+      const enabled = new gcp.projects.Service(`${name}-${api}`, {
         service: api,
         project: project.name,
       });
@@ -65,7 +68,7 @@ export class Project {
       `${name}-keyring`,
       {
         project: project.name,
-        location: "global",
+        location: 'global',
         name: `${name}-keyring`,
       },
       { dependsOn: enabledApis }
@@ -76,8 +79,8 @@ export class Project {
       rotationPeriod: `${365 * 24 * 60 * 60}s`,
       name: `pulumi-key`,
       versionTemplate: {
-        protectionLevel: "SOFTWARE",
-        algorithm: "GOOGLE_SYMMETRIC_ENCRYPTION",
+        protectionLevel: 'SOFTWARE',
+        algorithm: 'GOOGLE_SYMMETRIC_ENCRYPTION',
       },
     });
 
@@ -88,8 +91,8 @@ export class Project {
         rotationPeriod: `${365 * 24 * 60 * 60}s`,
         name: `${name}-my-reforge-ai-pulumi-key`,
         versionTemplate: {
-          protectionLevel: "SOFTWARE",
-          algorithm: "GOOGLE_SYMMETRIC_ENCRYPTION",
+          protectionLevel: 'SOFTWARE',
+          algorithm: 'GOOGLE_SYMMETRIC_ENCRYPTION',
         },
       }
     );
@@ -101,8 +104,8 @@ export class Project {
         rotationPeriod: `${365 * 24 * 60 * 60}s`,
         name: `${name}-talos-pulumi-key`,
         versionTemplate: {
-          protectionLevel: "SOFTWARE",
-          algorithm: "GOOGLE_SYMMETRIC_ENCRYPTION",
+          protectionLevel: 'SOFTWARE',
+          algorithm: 'GOOGLE_SYMMETRIC_ENCRYPTION',
         },
       }
     );
@@ -112,9 +115,9 @@ export class Project {
     const statesBucket = new gcp.storage.Bucket(`${name}-pulumi-state`, {
       name: `${name}-pulumi-states`,
       project: project.name,
-      location: "us-central1",
-      storageClass: "REGIONAL",
-      publicAccessPrevention: "enforced",
+      location: 'us-central1',
+      storageClass: 'REGIONAL',
+      publicAccessPrevention: 'enforced',
       softDeletePolicy: {
         retentionDurationSeconds: 0,
       },
@@ -129,9 +132,9 @@ export class Project {
       {
         name: `${name}-talos-pulumi-states`,
         project: project.name,
-        location: "us-central1",
-        storageClass: "REGIONAL",
-        publicAccessPrevention: "enforced",
+        location: 'us-central1',
+        storageClass: 'REGIONAL',
+        publicAccessPrevention: 'enforced',
         softDeletePolicy: {
           retentionDurationSeconds: 0,
         },
@@ -165,20 +168,24 @@ export class Project {
         );
       });
 
-      const m: createdServiceAccount = {
+      const m: CreatedServiceAccount = {
         privateKey: k.privateKey.apply((key) =>
-          Buffer.from(key, "base64").toString("utf8")
+          Buffer.from(key, 'base64').toString('utf8')
         ),
         email: sa.email,
       };
 
       this.pulumiServiceAccounts.push(m);
+
+      if (ac.name === 'reforge-ai') {
+        this.reforgeAiServiceAccountKey = m.privateKey;
+      }
     });
 
     this.pulumiServiceAccounts.forEach((ac) => {
       // Apply to only pulumi-runner.
       ac.email.apply((email: string) => {
-        if (email.includes("pulumi-runner")) {
+        if (email.includes('pulumi-runner')) {
           new gcp.storage.BucketIAMMember(
             `${name}-pulumi-runner-state-access`,
             {
@@ -190,7 +197,7 @@ export class Project {
           );
         }
 
-        if (email.includes("reforge-ai-runner")) {
+        if (email.includes('reforge-ai-runner')) {
           new gcp.storage.BucketIAMMember(
             `${name}-reforge-ai-runner-state-access`,
             {
@@ -218,7 +225,7 @@ export class Project {
             }
           );
 
-          if (email.includes("spigell-infra-talos-runner")) {
+          if (email.includes('spigell-infra-talos-runner')) {
             new gcp.storage.BucketIAMMember(
               `${name}-pulumi-talos-runner-state-access`,
               {
@@ -254,20 +261,20 @@ export class Project {
   WithGKEServiceAccounts(list: string[]) {
     const members: pulumi.Output<string>[] = [];
     list.forEach((name) => {
-      let ac = new gcp.serviceaccount.Account(`${this.name}-${name}-gke`, {
+      const ac = new gcp.serviceaccount.Account(`${this.name}-${name}-gke`, {
         accountId: `${name}-gke`,
         displayName: `${name}-gke`,
         project: this.name,
       });
       members.push(ac.email.apply((email) => `serviceAccount:${email}`));
 
-      let k = new gcp.serviceaccount.Key(`${name}-gke-key`, {
+      const k = new gcp.serviceaccount.Key(`${name}-gke-key`, {
         serviceAccountId: ac.name,
       });
 
-      let m: createdServiceAccount = {
+      const m: CreatedServiceAccount = {
         privateKey: k.privateKey.apply((key) =>
-          Buffer.from(key, "base64").toString("utf8")
+          Buffer.from(key, 'base64').toString('utf8')
         ),
         email: ac.email,
         namespace: pulumi.output(name),
@@ -277,10 +284,10 @@ export class Project {
     });
 
     // Controlling service accounts only here
-    new gcp.projects.IAMBinding("gke-accounts", {
+    new gcp.projects.IAMBinding('gke-accounts', {
       members: members,
       project: this.name,
-      role: "roles/container.clusterViewer",
+      role: 'roles/container.clusterViewer',
     });
 
     return this;
@@ -288,7 +295,7 @@ export class Project {
 
   allowWriteToStateBucket(email: string) {
     new gcp.storage.BucketIAMMember(
-      `pulumi-state-member-${email.split(".")[0]}`,
+      `pulumi-state-member-${email.split('.')[0]}`,
       {
         member: `serviceAccount:${email}`,
         role: `roles/storage.objectAdmin`,

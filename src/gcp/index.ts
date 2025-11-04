@@ -11,21 +11,21 @@ const billingAccount = gcp.organizations.getBillingAccount({
 const billingAccountId = billingAccount.then((a) => a.id);
 
 export const HHResponderGeminiProject = new gemini.FreeTierProject(
-  'hh-responder-gemini',
+  'hh-responder-gemini'
 );
 
 export const infraProject = new infra.Project(
-  billingAccountId,
+  billingAccountId
 ).WithGKEServiceAccounts(['spigell-resume-dev', 'spigell-resume-production']);
 
 export const resumeProduction = resume.ResumeProject(
   billingAccountId,
-  'spigell-resume-production',
+  'spigell-resume-production'
 );
 
 export const resumeDev = resume.ResumeProject(
   billingAccountId,
-  'spigell-resume-dev',
+  'spigell-resume-dev'
 );
 
 // Add permissions pulling images from all resumes project registries

@@ -1,7 +1,7 @@
-import * as pulumi from "@pulumi/pulumi";
-import * as gcp from "@pulumi/gcp";
+import * as pulumi from '@pulumi/pulumi';
+import * as gcp from '@pulumi/gcp';
 
-const apis = ["generativelanguage.googleapis.com"];
+const apis = ['generativelanguage.googleapis.com'];
 
 // Project creates a project for personal long-term infrastructure
 export class FreeTierProject {
