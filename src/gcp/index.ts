@@ -1,6 +1,6 @@
 import * as gcp from "@pulumi/gcp";
 import * as resume from "./resume-project";
-import * as state from "./state-project";
+import * as gemini from "./gemini-project";
 import * as infra from "./infra-project";
 import * as pulumi from "@pulumi/pulumi";
 
@@ -9,6 +9,10 @@ const billingAccount = gcp.organizations.getBillingAccount({
   displayName: "Main",
 });
 const billingAccountId = billingAccount.then((a) => a.id);
+
+export const HHResponderGeminiProject = new gemini.FreeTierProject(
+  "hh-responder-gemini"
+);
 
 export const infraProject = new infra.Project(
   billingAccountId
@@ -37,7 +41,7 @@ pulumi
     });
   });
 
-state.DeployStateProject(billingAccountId, [
-  resumeProduction.runnerEmail,
-  resumeDev.runnerEmail,
-]);
+//state.DeployStateProject(billingAccountId, [
+//  resumeProduction.runnerEmail,
+//  resumeDev.runnerEmail,
+//]);
