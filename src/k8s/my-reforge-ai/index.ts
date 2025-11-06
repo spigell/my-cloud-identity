@@ -1,7 +1,11 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
-import { Namespace, NamespaceArgs, RbacPolicyRule } from './namespace.js';
-import { createKubeconfigProvider } from './provider.js';
+import {
+  Namespace,
+  NamespaceArgs,
+  RbacPolicyRule,
+} from '../common/components/namespace.js';
+import { createKubeconfigProvider } from '../common/util/provider.js';
 
 export type ReforgeAiNamespaceArgs = {
   kubeconfigPath: pulumi.Input<string>;

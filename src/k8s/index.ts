@@ -1,5 +1,5 @@
 import * as pulumi from '@pulumi/pulumi';
-import { ReforgeAiNamespace } from './my-reforge-ai.js';
+import { ReforgeAiNamespace } from './my-reforge-ai/index.js';
 import { KubeconfigPaths } from './config.js';
 
 type NamespaceConfig = Record<string, pulumi.Output<string>>;
