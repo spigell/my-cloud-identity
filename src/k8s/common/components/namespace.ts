@@ -54,7 +54,7 @@ export class Namespace extends pulumi.ComponentResource {
     args: NamespaceArgs,
     opts: pulumi.ComponentResourceOptions = {}
   ) {
-    super('my-cloud-identity:k8s:NamespaceAccess', name, args, opts);
+    super('my-cloud-identity:k8s:Namespace', name, args, opts);
 
     const defaultedArgs = this.withDefaults(args);
     this.provider = defaultedArgs.provider;
@@ -66,8 +66,8 @@ export class Namespace extends pulumi.ComponentResource {
         : { parent: this }
     );
 
-    this._namespaceResource = new k8s.core.v1.Namespace( // Use renamed internal property
-      `${name}-namespace`,
+    this._namespaceResource = new k8s.core.v1.Namespace(
+      'namespace',
       {
         metadata: {
           name: defaultedArgs.namespaceName,

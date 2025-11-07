@@ -1,5 +1,8 @@
 import * as pulumi from '@pulumi/pulumi';
-import { ReforgeAiNamespace } from './my-reforge-ai/index.js';
+import {
+  NAMESPACE_NAME as REFORGE_NAMESPACE_NAME,
+  ReforgeAiNamespace,
+} from './my-reforge-ai/index.js';
 import { KubeconfigPaths } from './config.js';
 
 type NamespaceConfig = Record<string, pulumi.Output<string>>;
@@ -13,8 +16,8 @@ export class Kubernetes {
   public readonly myReforgeAi: ReforgeAiNamespace;
 
   constructor(args: KubernetesArgs) {
-    const namespaceConfig = args.namespaceConfigs['my-reforge-ai'];
-    if (!namespaceConfig?.gcpSecretKey) {
+    const namespaceConfig = args.namespaceConfigs[REFORGE_NAMESPACE_NAME];
+    if (!namespaceConfig.gcpSecretKey) {
       throw new pulumi.RunError(
         'my-reforge-ai namespace requires gcpSecretKey'
       );

@@ -7,6 +7,8 @@ import {
 } from '../common/components/namespace.js';
 import { createKubeconfigProvider } from '../common/util/provider.js';
 
+export const NAMESPACE_NAME = 'my-reforge-ai';
+
 export type ReforgeAiNamespaceArgs = {
   kubeconfigPath: pulumi.Input<string>;
   gcpSecretKey: pulumi.Output<string>;
@@ -37,12 +39,13 @@ export class ReforgeAiNamespace
   public outputs: ReforgeAiNamespaceOutputs;
 
   constructor(args: ReforgeAiNamespaceArgs) {
-    const name = 'my-reforge-ai';
+    const componentName = 'my-reforge-ai';
+    const namespaceName = 'reforge-ai';
 
-    super('my-cloud-identity:k8s:ReforgeAiNamespace', name, {}, {});
+    super('my-cloud-identity:k8s:ReforgeAiNamespace', componentName, {}, {});
 
     const provider = createKubeconfigProvider({
-      name: `${name}-provider`,
+      name: 'provider',
       kubeconfigPath: args.kubeconfigPath,
       opts: { parent: this },
     });
@@ -50,7 +53,7 @@ export class ReforgeAiNamespace
     this.provider = provider;
 
     const namespaceArgs: NamespaceArgs = {
-      name,
+      name: namespaceName,
       serviceAccounts: [
         {
           name: 'pulumi',
@@ -62,7 +65,7 @@ export class ReforgeAiNamespace
     };
 
     const deployed = new Namespace(
-      name,
+      'namespace',
       namespaceArgs,
       pulumi.mergeOptions({}, { parent: this })
     );
@@ -81,10 +84,10 @@ export class ReforgeAiNamespace
       .apply((key) => Buffer.from(key, 'utf8').toString('base64'));
 
     const secret = new k8s.core.v1.Secret(
-      name,
+      'secret',
       {
         metadata: {
-          name,
+          name: namespaceOutputs.namespace,
           namespace: namespaceOutputs.namespace,
         },
         data: {
