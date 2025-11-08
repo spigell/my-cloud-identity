@@ -1,5 +1,5 @@
-name: my-cloud-identity-facade
-description: Facade stack that re-exports Pulumi stack outputs using namespaced keys.
+name: output-gateway
+description: Stack that exposes outputs declared in outputsToReexport for a specific target stack.
 backend:
   url: gs://spigell-infra-pulumi-states
 runtime:

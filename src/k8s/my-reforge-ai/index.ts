@@ -39,13 +39,10 @@ export class ReforgeAiNamespace
   public outputs: ReforgeAiNamespaceOutputs;
 
   constructor(args: ReforgeAiNamespaceArgs) {
-    const componentName = 'my-reforge-ai';
-    const namespaceName = 'reforge-ai';
-
-    super('my-cloud-identity:k8s:ReforgeAiNamespace', componentName, {}, {});
+    super('my-cloud-identity:k8s:ReforgeAiNamespace', NAMESPACE_NAME, {}, {});
 
     const provider = createKubeconfigProvider({
-      name: 'provider',
+      name: `${NAMESPACE_NAME}-ns`,
       kubeconfigPath: args.kubeconfigPath,
       opts: { parent: this },
     });
@@ -53,11 +50,11 @@ export class ReforgeAiNamespace
     this.provider = provider;
 
     const namespaceArgs: NamespaceArgs = {
-      name: namespaceName,
+      name: NAMESPACE_NAME,
       serviceAccounts: [
         {
-          name: 'pulumi',
-          roleName: 'pulumi-role',
+          name: 'pulumi-mcp',
+          roleName: 'pulumi-mcp',
           rbacRules: PULUMI_RBAC_RULES,
         },
       ],
@@ -65,7 +62,7 @@ export class ReforgeAiNamespace
     };
 
     const deployed = new Namespace(
-      'namespace',
+      NAMESPACE_NAME,
       namespaceArgs,
       pulumi.mergeOptions({}, { parent: this })
     );
@@ -83,11 +80,11 @@ export class ReforgeAiNamespace
       .secret(args.gcpSecretKey)
       .apply((key) => Buffer.from(key, 'utf8').toString('base64'));
 
-    const secret = new k8s.core.v1.Secret(
-      'secret',
+    const gcpPulumiSecretKey = new k8s.core.v1.Secret(
+      'gcp-pulumi-runner-key',
       {
         metadata: {
-          name: namespaceOutputs.namespace,
+          name: 'gcp-pulumi-runner-key',
           namespace: namespaceOutputs.namespace,
         },
         data: {
@@ -100,11 +97,12 @@ export class ReforgeAiNamespace
 
     this.outputs = {
       pulumiAccountName: pulumiAccountName,
-      gcpSecretKeyName: secret.metadata.name,
+      gcpSecretKeyName: pulumi.secret(gcpPulumiSecretKey.metadata.name),
     };
 
     this.registerOutputs({
       namespace: namespaceOutputs.namespace,
+      gcpSecretKeyName: gcpPulumiSecretKey.metadata.name,
     });
   }
 }

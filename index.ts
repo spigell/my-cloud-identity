@@ -20,7 +20,7 @@ const kubeconfigPaths =
 const kubernetes = new k8s.Kubernetes({
   kubeconfigsPath: kubeconfigPaths,
   namespaceConfigs: {
-    REFORGE_NAMESPACE_NAME: {
+    [REFORGE_NAMESPACE_NAME]: {
       gcpSecretKey: gcp.infraProject.reforgeAiServiceAccountKey,
     },
   },
@@ -28,8 +28,8 @@ const kubernetes = new k8s.Kubernetes({
 
 const myReforgeAi = kubernetes.myReforgeAi;
 
-export const outputs_to_reexport = {
-  REFORGE_NAMESPACE_NAME: {
+export const outputsToReexport = {
+  [REFORGE_NAMESPACE_NAME]: {
     'pulumi-account-name': myReforgeAi.outputs.pulumiAccountName,
     'gcp-secret-key-name': myReforgeAi.outputs.gcpSecretKeyName,
   },

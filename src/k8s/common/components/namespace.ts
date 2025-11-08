@@ -67,7 +67,7 @@ export class Namespace extends pulumi.ComponentResource {
     );
 
     this._namespaceResource = new k8s.core.v1.Namespace(
-      'namespace',
+      defaultedArgs.namespaceName,
       {
         metadata: {
           name: defaultedArgs.namespaceName,
@@ -90,7 +90,7 @@ export class Namespace extends pulumi.ComponentResource {
       );
 
       const roleResource = new k8s.rbac.v1.Role(
-        `${name}-${serviceAccountArgs.roleName}-role`,
+        serviceAccountArgs.roleName,
         {
           metadata: {
             name: serviceAccountArgs.roleName,
@@ -102,7 +102,7 @@ export class Namespace extends pulumi.ComponentResource {
       );
 
       new k8s.rbac.v1.RoleBinding(
-        `${name}-${serviceAccountArgs.roleName}-role-binding`,
+        `${serviceAccountArgs.roleName}2${serviceAccountArgs.name}`,
         {
           metadata: {
             name: `${serviceAccountArgs.roleName}-${serviceAccountArgs.name}`,

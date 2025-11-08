@@ -1,7 +1,7 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../dist/facade",
+    "outDir": "../dist/output-gateway",
     "rootDir": ".",
     "rootDirs": ["."]
   },
