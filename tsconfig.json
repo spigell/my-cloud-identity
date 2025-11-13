@@ -1,19 +1,21 @@
 {
   "compilerOptions": {
-    "target": "es2022",
-    "module": "es2024",
-    "moduleResolution": "node",
-    "outDir": "./dist",
-    "rootDirs": ["./src"],
     "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
+    "outDir": "bin",
+    "target": "es2023",
+    "module": "es2022",
+    "moduleResolution": "node",
     "sourceMap": true,
     "experimentalDecorators": true,
     "pretty": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
-    "forceConsistentCasingInFileNames": true
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "ts-node": {
+    "logError": true
   },
   "files": ["index.ts"]
 }

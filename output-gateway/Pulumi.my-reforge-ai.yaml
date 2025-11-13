@@ -1,0 +1,2 @@
+secretsprovider: gcpkms://projects/spigell-infra/locations/global/keyRings/spigell-infra-keyring/cryptoKeys/spigell-infra-my-reforge-ai-pulumi-key
+encryptedkey: CiQAlZw1Sngi/h8MRvNUOKAoIfeet2Jm32ZaZWRJ+nBEorXwlkASSQB1JEBoK9/wqo5SJHjKeHyQiGRSGQttRkRyE6Jru/g6xmP4IDOtzuvK2bWj0jNdEtIXsdd3HdpMSbKbypvZF2D6ZGdvBBRS9wE=

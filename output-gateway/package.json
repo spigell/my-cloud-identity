@@ -1,0 +1,7 @@
+{
+  "name": "ouptut-gateway",
+  "type": "module",
+  "main": "index.ts",
+  "devDependencies": {},
+  "dependencies": {}
+}

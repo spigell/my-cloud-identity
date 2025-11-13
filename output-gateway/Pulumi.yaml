@@ -1,0 +1,9 @@
+name: output-gateway
+description: Stack that exposes outputs declared in outputsToReexport for a specific target stack.
+backend:
+  url: gs://spigell-infra-pulumi-states
+runtime:
+  name: nodejs
+  options:
+    packagemanager: yarn
+    nodeargs: '--loader ts-node/esm --no-warnings --inspect'

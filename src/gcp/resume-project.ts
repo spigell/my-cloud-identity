@@ -1,7 +1,7 @@
-import * as pulumi from "@pulumi/pulumi";
-import * as gcp from "@pulumi/gcp";
+import * as pulumi from '@pulumi/pulumi';
+import * as gcp from '@pulumi/gcp';
 
-const registryName = "resume-images";
+const registryName = 'resume-images';
 
 type DeployedProject = {
   runnerPrivateKey: pulumi.Output<string>;
@@ -11,30 +11,30 @@ type DeployedProject = {
 };
 
 const customRole = {
-  name: "custom.pulumi.runner",
-  permissions: ["compute.regionOperations.get"],
+  name: 'custom.pulumi.runner',
+  permissions: ['compute.regionOperations.get'],
 };
 
 const apis = [
-  "iam.googleapis.com",
-  "compute.googleapis.com",
-  "dns.googleapis.com",
-  "run.googleapis.com",
-  "cloudkms.googleapis.com",
-  "artifactregistry.googleapis.com",
-  "certificatemanager.googleapis.com",
-  "firestore.googleapis.com",
+  'iam.googleapis.com',
+  'compute.googleapis.com',
+  'dns.googleapis.com',
+  'run.googleapis.com',
+  'cloudkms.googleapis.com',
+  'artifactregistry.googleapis.com',
+  'certificatemanager.googleapis.com',
+  'firestore.googleapis.com',
 ];
 
 const roles = [
-  "dns.admin",
-  "storage.admin",
-  "compute.loadBalancerAdmin",
-  "run.admin",
-  "iam.serviceAccountTokenCreator",
-  "artifactregistry.writer",
-  "certificatemanager.owner",
-  "datastore.owner",
+  'dns.admin',
+  'storage.admin',
+  'compute.loadBalancerAdmin',
+  'run.admin',
+  'iam.serviceAccountTokenCreator',
+  'artifactregistry.writer',
+  'certificatemanager.owner',
+  'datastore.owner',
 ];
 
 export function ResumeProject(billingAccount: Promise<string>, name: string) {
@@ -57,8 +57,8 @@ export function ResumeProject(billingAccount: Promise<string>, name: string) {
 
   // Create iam account for specific project
   const gcpAccount = new gcp.serviceaccount.Account(`${name}-pulumi-runner`, {
-    accountId: "pulumi-runner",
-    displayName: "Pulumi Runner",
+    accountId: 'pulumi-runner',
+    displayName: 'Pulumi Runner',
     project: project.name,
   });
 
@@ -66,27 +66,27 @@ export function ResumeProject(billingAccount: Promise<string>, name: string) {
   const keyring = new gcp.kms.KeyRing(
     `${name}-keyring`,
     {
-      name: "pulumi-runner-keyring",
+      name: 'pulumi-runner-keyring',
       project: project.name,
-      location: "global",
+      location: 'global',
     },
     { dependsOn: enabledApis }
   );
 
   const key = new gcp.kms.CryptoKey(`${name}-key`, {
-    name: "pulumi-runner-key",
+    name: 'pulumi-runner-key',
     keyRing: keyring.id,
-    rotationPeriod: "15552000s",
+    rotationPeriod: '15552000s',
     versionTemplate: {
-      protectionLevel: "SOFTWARE",
-      algorithm: "GOOGLE_SYMMETRIC_ENCRYPTION",
+      protectionLevel: 'SOFTWARE',
+      algorithm: 'GOOGLE_SYMMETRIC_ENCRYPTION',
     },
   });
 
   const cr = new gcp.projects.IAMCustomRole(
     `${name}-pulumi-runner`,
     {
-      title: "Custom role for pulumi runner",
+      title: 'Custom role for pulumi runner',
       roleId: customRole.name,
       permissions: customRole.permissions,
       project: project.name,
@@ -121,18 +121,18 @@ export function ResumeProject(billingAccount: Promise<string>, name: string) {
   new gcp.serviceaccount.IAMBinding(`${name}-cloudrun-deployer`, {
     serviceAccountId: pulumi.interpolate`projects/${project.name}/serviceAccounts/${project.number}-compute@developer.gserviceaccount.com`,
     members: [gcpAccount.email.apply((email) => `serviceAccount:${email}`)],
-    role: "roles/iam.serviceAccountUser",
+    role: 'roles/iam.serviceAccountUser',
   });
 
   // Create repo in artifact registry
   new gcp.artifactregistry.Repository(
     `${name}-${registryName}`,
     {
-      location: "us-central1",
+      location: 'us-central1',
       repositoryId: registryName,
       project: project.name,
-      format: "DOCKER",
-      description: "Resume images",
+      format: 'DOCKER',
+      description: 'Resume images',
     },
     { dependsOn: enabledApis }
   );
@@ -140,7 +140,7 @@ export function ResumeProject(billingAccount: Promise<string>, name: string) {
   // Allow sa to decrypt data with key
   new gcp.kms.CryptoKeyIAMMember(`${name}-key-decrypter`, {
     cryptoKeyId: key.id,
-    role: "roles/cloudkms.cryptoKeyDecrypter",
+    role: 'roles/cloudkms.cryptoKeyDecrypter',
     member: gcpAccount.email.apply((email) => `serviceAccount:${email}`),
   });
 
@@ -152,7 +152,7 @@ export function ResumeProject(billingAccount: Promise<string>, name: string) {
   // export the private key as decoded base64 string
   const deployed: DeployedProject = {
     runnerPrivateKey: gcpKey.privateKey.apply((key) =>
-      Buffer.from(key, "base64").toString("utf8")
+      Buffer.from(key, 'base64').toString('utf8')
     ),
     runnerEmail: gcpAccount.email,
     kmsKeyPath: key.id,
@@ -169,6 +169,6 @@ export function AddRegistryPermissions(
   new gcp.projects.IAMMember(`reader-for-${project}`, {
     project: project,
     member: pulumi.interpolate`email:${projectID}-compute@developer.gserviceaccount.com`,
-    role: "roles/artifactregistry.reader",
+    role: 'roles/artifactregistry.reader',
   });
 }
