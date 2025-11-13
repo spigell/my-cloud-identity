@@ -1,5 +1,6 @@
 /bin/
 /node_modules/
+output-gateway/node_modules/
 *.sublime-workspace
 dist/
 
