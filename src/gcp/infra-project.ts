@@ -197,7 +197,7 @@ export class Project {
           );
         }
 
-        if (email.includes('reforge-ai-runner')) {
+        if (email.includes('reforge-ai')) {
           new gcp.storage.BucketIAMMember(
             `${name}-reforge-ai-runner-state-access`,
             {
