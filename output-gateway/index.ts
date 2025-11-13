@@ -11,7 +11,7 @@ const outputsToReexport = stackRef.getOutput(
   'outputsToReexport'
 ) as pulumi.Output<OutputsToReexport>;
 
-export const output = outputsToReexport.apply(
+export const outputs = outputsToReexport.apply(
   (namespaces: OutputsToReexport | undefined) => {
     if (!namespaces) {
       throw new pulumi.RunError('No outputsToReexport definition found.');

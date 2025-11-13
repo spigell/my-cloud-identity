@@ -30,7 +30,8 @@ const myReforgeAi = kubernetes.myReforgeAi;
 
 export const outputsToReexport = {
   [REFORGE_NAMESPACE_NAME]: {
+    'namespace-name': myReforgeAi.outputs.namespaceName,
     'pulumi-account-name': myReforgeAi.outputs.pulumiAccountName,
-    'gcp-secret-key-name': myReforgeAi.outputs.gcpSecretKeyName,
+    'pulumi-gcp-secret-key-name': myReforgeAi.outputs.pulumiGCPSecretKeyName,
   },
 };

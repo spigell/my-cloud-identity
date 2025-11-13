@@ -2,31 +2,33 @@ import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
 
 export type RbacPolicyRule = k8s.types.input.rbac.v1.PolicyRule;
+export type ClusterRbacPolicyRule = k8s.types.input.rbac.v1.PolicyRule;
+
+export type ServiceAccountArgs = {
+  /** The name of the ServiceAccount */
+  name: string;
+
+  /** Rules for a namespace-scoped Role that will be bound to this ServiceAccount */
+  namespaceRbacRules?: RbacPolicyRule[];
+
+  /** Rules for a cluster-scoped ClusterRole that will be bound to this ServiceAccount */
+  clusterRbacRules?: ClusterRbacPolicyRule[];
+};
 
 export type NamespaceArgs = {
   name: string;
-  serviceAccounts: NamespaceServiceAccountArgs[];
+  serviceAccounts: ServiceAccountArgs[];
   provider?: k8s.Provider;
-};
-
-export type NamespaceServiceAccountArgs = {
-  name: string;
-  roleName: string;
-  rbacRules?: RbacPolicyRule[];
 };
 
 export type NamespaceOutputs = {
   namespace: pulumi.Output<string>;
-  serviceAccounts: pulumi.Output<string>[];
+  serviceAccounts: Record<string, pulumi.Output<string>>;
 };
 
 type NormalizedNamespaceArgs = {
   namespaceName: string;
-  serviceAccounts: {
-    name: string;
-    roleName: string;
-    rbacRules: RbacPolicyRule[];
-  }[];
+  serviceAccounts: Required<ServiceAccountArgs>[];
   provider?: k8s.Provider;
 };
 
@@ -46,7 +48,6 @@ export class Namespace extends pulumi.ComponentResource {
   public readonly outputs: NamespaceOutputs; // This will hold the actual outputs
   // Renamed internal resource properties to avoid conflict with NamespaceOutputs
   private readonly _namespaceResource: k8s.core.v1.Namespace;
-  private readonly serviceAccountResources: k8s.core.v1.ServiceAccount[];
   private readonly provider?: k8s.Provider;
 
   constructor(
@@ -76,72 +77,106 @@ export class Namespace extends pulumi.ComponentResource {
       resourceOptions
     );
 
-    this.serviceAccountResources = [];
+    const namespaceName = this._namespaceResource.metadata.name;
+    const serviceAccountOutputs: Record<string, pulumi.Output<string>> = {};
     for (const serviceAccountArgs of defaultedArgs.serviceAccounts) {
       const serviceAccountResource = new k8s.core.v1.ServiceAccount(
         serviceAccountArgs.name,
         {
           metadata: {
             name: serviceAccountArgs.name,
-            namespace: this._namespaceResource.metadata.name,
+            namespace: namespaceName,
           },
         },
         resourceOptions
       );
 
-      const roleResource = new k8s.rbac.v1.Role(
-        serviceAccountArgs.roleName,
-        {
-          metadata: {
-            name: serviceAccountArgs.roleName,
-            namespace: this._namespaceResource.metadata.name,
-          },
-          rules: serviceAccountArgs.rbacRules,
-        },
-        resourceOptions
-      );
-
-      new k8s.rbac.v1.RoleBinding(
-        `${serviceAccountArgs.roleName}2${serviceAccountArgs.name}`,
-        {
-          metadata: {
-            name: `${serviceAccountArgs.roleName}-${serviceAccountArgs.name}`,
-            namespace: this._namespaceResource.metadata.name,
-          },
-          subjects: [
-            {
-              kind: 'ServiceAccount',
-              name: serviceAccountResource.metadata.name,
-              namespace: this._namespaceResource.metadata.name,
+      if (serviceAccountArgs.namespaceRbacRules.length) {
+        const roleName = serviceAccountArgs.name;
+        const roleResource = new k8s.rbac.v1.Role(
+          roleName,
+          {
+            metadata: {
+              name: roleName,
+              namespace: namespaceName,
             },
-          ],
-          roleRef: {
-            apiGroup: 'rbac.authorization.k8s.io',
-            kind: 'Role',
-            name: roleResource.metadata.name,
+            rules: serviceAccountArgs.namespaceRbacRules,
           },
-        },
-        resourceOptions
-      );
+          resourceOptions
+        );
 
-      this.serviceAccountResources.push(serviceAccountResource);
+        const RoleBindingName = `${roleName}2${serviceAccountArgs.name}`;
+        new k8s.rbac.v1.RoleBinding(
+          RoleBindingName,
+          {
+            metadata: {
+              name: RoleBindingName,
+              namespace: namespaceName,
+            },
+            subjects: [
+              {
+                kind: 'ServiceAccount',
+                name: serviceAccountResource.metadata.name,
+                namespace: namespaceName,
+              },
+            ],
+            roleRef: {
+              apiGroup: 'rbac.authorization.k8s.io',
+              kind: 'Role',
+              name: roleResource.metadata.name,
+            },
+          },
+          resourceOptions
+        );
+      }
+
+      if (serviceAccountArgs.clusterRbacRules.length) {
+        const clusterRoleName = serviceAccountArgs.name;
+        const clusterRoleResource = new k8s.rbac.v1.ClusterRole(
+          clusterRoleName,
+          {
+            metadata: {
+              name: clusterRoleName,
+            },
+            rules: serviceAccountArgs.clusterRbacRules,
+          },
+          resourceOptions
+        );
+
+        const ClusterRoleBindingName = `${clusterRoleName}2${serviceAccountArgs.name}`;
+        new k8s.rbac.v1.ClusterRoleBinding(
+          ClusterRoleBindingName,
+          {
+            metadata: {
+              name: ClusterRoleBindingName,
+            },
+            subjects: [
+              {
+                kind: 'ServiceAccount',
+                name: serviceAccountResource.metadata.name,
+                namespace: namespaceName,
+              },
+            ],
+            roleRef: {
+              apiGroup: 'rbac.authorization.k8s.io',
+              kind: 'ClusterRole',
+              name: clusterRoleResource.metadata.name,
+            },
+          },
+          resourceOptions
+        );
+      }
+
+      serviceAccountOutputs[serviceAccountArgs.name] =
+        serviceAccountResource.metadata.name;
     }
 
-    // Assign the public properties to satisfy the interface
-    const namespace = this._namespaceResource.metadata.name;
-    const serviceAccounts = this.serviceAccountResources.map(
-      (serviceAccount) => serviceAccount.metadata.name
-    );
-
     this.outputs = {
-      namespace: namespace, // Reference the public property
-      serviceAccounts: serviceAccounts,
+      namespace: namespaceName,
+      serviceAccounts: serviceAccountOutputs,
     };
 
-    this.registerOutputs({
-      namespace: namespace, // Reference the public property
-      serviceAccounts: serviceAccounts,
-    });
+    this.registerOutputs(this.outputs);
   }
 
   private withDefaults(args: NamespaceArgs): NormalizedNamespaceArgs {
@@ -151,8 +186,8 @@ export class Namespace extends pulumi.ComponentResource {
       namespaceName: args.name,
       serviceAccounts: args.serviceAccounts.map((serviceAccount) => ({
         name: serviceAccount.name,
-        roleName: serviceAccount.roleName,
-        rbacRules: serviceAccount.rbacRules ?? defaultRules,
+        namespaceRbacRules: serviceAccount.namespaceRbacRules ?? defaultRules,
+        clusterRbacRules: serviceAccount.clusterRbacRules ?? [],
       })),
       provider,
     };
